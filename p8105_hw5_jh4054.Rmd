@@ -43,9 +43,26 @@ patient_df = patient_id %>%
          arm = str_replace(id, "_..", ""),
          id = str_replace(id, "..._", ""),
          week = as.integer(as.factor(week)),
-         id = as.integer(as.factor(id))) %>% 
+         id = as.factor(id)) %>% 
   select(arm, id, week, observation) %>%
   arrange(arm, id, week)
+
+patient_plot = patient_df %>% 
+  group_by(id) %>% 
+  ggplot(aes(x = week, y = observation, color = id)) +
+  geom_line() +
+  facet_grid(~arm)
+patient_plot
+
+patient_dotplot = patient_df %>% 
+  group_by(id) %>% 
+  ggplot(aes(x = week, y = observation, color = id)) +
+  geom_point() +
+  facet_grid(~arm)
+patient_dotplot
+
+lm_exp = lm(week ~ observation, data = filter(patient_df, arm == "exp")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
+lm_con = lm(week ~ observation, data = filter(patient_df, arm == "con")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
 ```
 
 ```{r}
