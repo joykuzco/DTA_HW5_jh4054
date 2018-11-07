@@ -28,7 +28,7 @@ theme_set(theme_bw() + theme(legend.position = "bottom"))
 
 ### Problem 1
 ```{r}
-#better method
+#tidy dataset
 patient_id = 
   tibble(
     id = c(str_c("con_0", 01:9), "con_10", str_c("exp_0", 01:9), "exp_10")) %>%
@@ -47,33 +47,30 @@ patient_df = patient_id %>%
   select(arm, id, week, observation) %>%
   arrange(arm, id, week)
 
+#spaghetti plot
 patient_plot = patient_df %>% 
   group_by(id) %>% 
   ggplot(aes(x = week, y = observation, color = id)) +
   geom_line() +
-  facet_grid(~arm)
+  facet_grid(~arm) +
+  viridis::scale_color_viridis(discrete = TRUE)
 patient_plot
 
-patient_dotplot = patient_df %>% 
-  group_by(id) %>% 
-  ggplot(aes(x = week, y = observation, color = id)) +
-  geom_point() +
-  facet_grid(~arm)
-patient_dotplot
-
+#linear model
 lm_exp = lm(week ~ observation, data = filter(patient_df, arm == "exp")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
 lm_con = lm(week ~ observation, data = filter(patient_df, arm == "con")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
 ```
 
 ```{r}
 #provide a character vector of the names of files in named directory data
-patient_csv2 = list.files("./data", full.names = TRUE) %>%
-  map_df(., read_csv)
+patient_csv2 = 
+  tibble(
+    csv = list.files("./data", full.names = TRUE),
+    data = map(csv, read_csv)) %>% 
+  unnest()
 
 patient_id2 = 
-  tibble(
-    id = c(str_c("con_0", 01:9), "con_10", str_c("exp_0", 01:9), "exp_10")) %>%
-  mutate(csv = str_c("./data/", id, ".csv"))
+  tibble(id = c(str_c("con_0", 01:9), "con_10", str_c("exp_0", 01:9), "exp_10"))
 
 patient_df2 = bind_cols(patient_id2, patient_csv2) %>% 
   janitor::clean_names() %>% 
