@@ -27,8 +27,45 @@ theme_set(theme_bw() + theme(legend.position = "bottom"))
 ```
 
 ### Problem 1
-
 ```{r}
-
+#better method
+patient_id = 
+  tibble(
+    id = c(str_c("con_0", 01:9), "con_10", str_c("exp_0", 01:9), "exp_10")) %>%
+  mutate(csv = str_c("./data/", id, ".csv")) 
+  
+patient_df = patient_id %>% 
+  mutate(observation = map(patient_id$csv, read_csv)) %>% 
+  unnest() %>% 
+  janitor::clean_names() %>% 
+  gather(key = week, value = observation, week_1:week_8) %>% 
+  mutate(week = str_replace(week, "week_", ""),
+         arm = str_replace(id, "_..", ""),
+         id = str_replace(id, "..._", ""),
+         week = as.integer(as.factor(week)),
+         id = as.integer(as.factor(id))) %>% 
+  select(arm, id, week, observation) %>%
+  arrange(arm, id, week)
 ```
 
+```{r}
+#provide a character vector of the names of files in named directory data
+patient_csv2 = list.files("./data", full.names = TRUE) %>%
+  map_df(., read_csv)
+
+patient_id2 = 
+  tibble(
+    id = c(str_c("con_0", 01:9), "con_10", str_c("exp_0", 01:9), "exp_10")) %>%
+  mutate(csv = str_c("./data/", id, ".csv"))
+
+patient_df2 = bind_cols(patient_id2, patient_csv2) %>% 
+  janitor::clean_names() %>% 
+  gather(key = week, value = progress, week_1:week_8) %>% 
+  mutate(week = str_replace(week, "week_", ""),
+         arm = str_replace(id, "_..", ""),
+         id = str_replace(id, "..._", ""),
+         week = as.integer(as.factor(week)),
+         id = as.integer(as.factor(id))) %>% 
+  select(arm, id, week, progress) %>%
+  arrange(arm, id, week)
+```
