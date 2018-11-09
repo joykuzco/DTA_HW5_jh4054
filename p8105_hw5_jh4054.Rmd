@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(rvest)
+library(knitr)
 
 set.seed(1)
 
@@ -82,6 +83,7 @@ patient_df2 = patient_id %>%
 
 ### Problem 2
 
+Load and clean dataset
 ```{r}
 #load and tidy dataset
 homicide_data = read_csv("./data/homicide-data.csv") %>% 
@@ -103,26 +105,57 @@ homicide_unsolve = homicide_data %>%
 
 #total number of homicides and unsolved homicides
 homicide_tidy = left_join(homicide_total, homicide_unsolve)
+```
+
+prop.test for baltimore
+```{r}
+prop_test_baltimore = homicide_tidy %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  with(., prop.test(n = hom_total, x = hom_unsolved)) %>% 
+  broom::tidy() %>% 
+  select(estimate, conf.low, conf.high)
+prop_test_baltimore %>% kable(digits = 2)
+```
+
+
+prop.test for other cities
+```{r}
+prop_test_all = homicide_tidy %>% 
+  mutate(prop = map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
+         prop = map(prop, broom::tidy)) %>% 
+  unnest()
+
+  
+map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y))
 
 prop_test_balt = homicide_tidy %>% 
   filter(city_state == "Baltimore, MD") %>% 
-  mutate(prop = map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y))) %>% 
-  broom::tidy() %>% 
+  mutate(prop = map2(data, .x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
+         prop = map(prop, broom::tidy)) %>%
+  unnest() %>% unnest()
+
+prop_test_balt = homicide_tidy %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  group_by(city_state) %>% 
+  nest() %>% 
+  mutate(prop = map2(data, .x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
+         prop = map(prop, broom::tidy)) %>%
   unnest()
 
-pull(prop_test_balt)
 
 p1 = homicide_tidy %>% 
   filter(city_state == "Baltimore, MD") %>% 
-  mutate(prop = map2(hom_total, hom_unsolved, ~prop.test)) %>% unnest()
+  mutate(prop = map2(hom_total, hom_unsolved, ~prop.test)) %>% 
   broom::tidy() %>% 
   unnest()
 
 prop.test(n = homicide_tidy$hom_total, x = homicide_tidy$hom_unsolved)
 
+
+
 prop_test_baltimore = homicide_tidy %>% 
   filter(city_state == "Baltimore, MD") %>% 
-  with(., prop.test(n = hom_total, x = hom_unsolved)) %>% broom::tidy()
+  mutate(prop = with(., prop.test(n = hom_total, x = hom_unsolved))
 ```
 
 ```{r}
