@@ -123,7 +123,9 @@ prop.test for other cities
 prop_test_all = homicide_tidy %>% 
   mutate(prop = map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
          prop = map(prop, broom::tidy)) %>% 
-  unnest()
+  unnest() %>% 
+  select(city_state, estimate, conf.low, conf.high) %>% 
+  mutate(city_state = fct_reorder(city_state, estimate))
 
   
 map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y))
