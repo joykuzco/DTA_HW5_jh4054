@@ -117,7 +117,6 @@ prop_test_baltimore = homicide_tidy %>%
 prop_test_baltimore %>% kable(digits = 2)
 ```
 
-
 prop.test for other cities
 ```{r}
 prop_test_all = homicide_tidy %>% 
@@ -125,42 +124,21 @@ prop_test_all = homicide_tidy %>%
          prop = map(prop, broom::tidy)) %>% 
   unnest() %>% 
   select(city_state, estimate, conf.low, conf.high) %>% 
-  mutate(city_state = fct_reorder(city_state, estimate))
+  mutate(city_state = fct_reorder(city_state, desc(estimate)))
 
-  
-map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y))
-
-prop_test_balt = homicide_tidy %>% 
-  filter(city_state == "Baltimore, MD") %>% 
-  mutate(prop = map2(data, .x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
-         prop = map(prop, broom::tidy)) %>%
-  unnest() %>% unnest()
-
-prop_test_balt = homicide_tidy %>% 
-  filter(city_state == "Baltimore, MD") %>% 
-  group_by(city_state) %>% 
-  nest() %>% 
-  mutate(prop = map2(data, .x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
-         prop = map(prop, broom::tidy)) %>%
-  unnest()
-
-
-p1 = homicide_tidy %>% 
-  filter(city_state == "Baltimore, MD") %>% 
-  mutate(prop = map2(hom_total, hom_unsolved, ~prop.test)) %>% 
-  broom::tidy() %>% 
-  unnest()
-
-prop.test(n = homicide_tidy$hom_total, x = homicide_tidy$hom_unsolved)
-
-
-
-prop_test_baltimore = homicide_tidy %>% 
-  filter(city_state == "Baltimore, MD") %>% 
-  mutate(prop = with(., prop.test(n = hom_total, x = hom_unsolved))
+prop_test_all %>% 
+  ggplot(aes(x = city_state, y = estimate, color = city_state)) +
+  geom_point() +
+  geom_errorbar(mapping = aes(x = city_state, ymin = conf.low, ymax = conf.high)) + 
+  labs(
+    title = "Proportion of Unsolved Homicides in 50 Cities",
+    x = "City",
+    y = "Estimated Proportion",
+    caption = "*Data collated by Washington Post") + 
+  viridis::scale_color_viridis(
+    name = "City", 
+    discrete = TRUE) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 80, hjust = 1), 
+        legend.position = "bottom")
 ```
-
-```{r}
-#proportion test in R
-```
-
