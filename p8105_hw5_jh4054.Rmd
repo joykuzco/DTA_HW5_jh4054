@@ -139,7 +139,7 @@ prop_test_baltimore %>% kable(digits = 2)
 #### 2.2 Proportion Unsolved Homicides, All Cities
 
 We run the proportion test for all 50 cities and construct a 95% confidence interval for the estimated proportion of unsolved homicides. In the plot below, cities are arranged in descending order of proportion. 
-```{r}
+```{r, fig.width = 10, fig.height = 8}
 prop_test_all = homicide_tidy %>% 
   mutate(prop = map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
          prop = map(prop, broom::tidy)) %>% 
@@ -147,7 +147,7 @@ prop_test_all = homicide_tidy %>%
   select(city_state, estimate, conf.low, conf.high) %>% 
   mutate(city_state = fct_reorder(city_state, desc(estimate)))
 
-prop_test_all %>% 
+prop_test_plot = prop_test_all %>% 
   ggplot(aes(x = city_state, y = estimate, color = city_state)) +
   geom_point() +
   geom_errorbar(mapping = aes(x = city_state, ymin = conf.low, ymax = conf.high)) + 
@@ -162,4 +162,5 @@ prop_test_all %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1), 
         legend.position = "bottom")
+prop_test_plot
 ```
