@@ -103,9 +103,25 @@ patient_df2 = patient_id %>%
 
 ### Problem 2
 
-The homicide dataset
+The homicide dataset was collated by Washington Post on 52179 homicide cases in 50 major US cities, from 2007 to 2015. Altogether, 28 states are represented. The raw dimensions are 52179 rows by 12 columns variables. Each case is reported as a distinct row, with demographic information on the victim's name, age, sex, and race. Attributes regarding the homicide incident include geospatial coordinates, reported date, city, and disposition of the police case. 
+```{r}
+#examine raw dataset
+raw_dataset = read_csv("./data/homicide-data.csv")
+dim(raw_dataset)
+
+#represented states and cities
+raw_dataset %>% 
+  distinct(state) %>% 
+  nrow()
+
+raw_dataset %>% 
+  distinct(city) %>% 
+  nrow()
+```
+
 ```{r}
 #load and tidy dataset
+#Correct State affiliation for one homicide case in Tulsa, OK. Original case had incorrect state as Tulsa, AL
 homicide_data = read_csv("./data/homicide-data.csv") %>% 
   janitor::clean_names() %>% 
   mutate(
@@ -123,12 +139,15 @@ homicide_unsolve = homicide_data %>%
   group_by(city_state) %>% 
   summarise(hom_unsolved = sum(hom_unsolved))
 
-#total number of homicides and unsolved homicides
+#join dataframes for total homicides and unsolved homicides
 homicide_tidy = left_join(homicide_total, homicide_unsolve)
 ```
 
-prop.test for baltimore
+#### 2.1 Proportion Test for Baltimore
+
+In Baltimore, the estimated proportion of unsolved homicides cases (disposition as “Closed without arrest” or “Open/No arrest”) is 0.65, with a 95% Confidence Interval of (0.63, 0.66). 
 ```{r}
+#Proportion test for Baltimore
 prop_test_baltimore = homicide_tidy %>% 
   filter(city_state == "Baltimore, MD") %>% 
   with(., prop.test(n = hom_total, x = hom_unsolved)) %>% 
@@ -137,7 +156,9 @@ prop_test_baltimore = homicide_tidy %>%
 prop_test_baltimore %>% kable(digits = 2)
 ```
 
-prop.test for other cities
+#### 2.2 Proportion Unsolved Homicides, All Cities
+
+We run the proportion test for all 50 cities and construct a 95% confidence interval for the estimated proportion of unsolved homicides. In the plot below, cities are arranged in descending order of proportion. 
 ```{r}
 prop_test_all = homicide_tidy %>% 
   mutate(prop = map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y)),
@@ -151,10 +172,10 @@ prop_test_all %>%
   geom_point() +
   geom_errorbar(mapping = aes(x = city_state, ymin = conf.low, ymax = conf.high)) + 
   labs(
-    title = "Proportion of Unsolved Homicides in 50 Cities",
+    title = "Proportion of Unsolved Homicides in 50 Cities, 2007-2015",
     x = "City",
     y = "Estimated Proportion",
-    caption = "*Data collated by Washington Post") + 
+    caption = "*Case Data collated by Washington Post") + 
   viridis::scale_color_viridis(
     name = "City", 
     discrete = TRUE) +
