@@ -2,7 +2,7 @@
 title: "p8105_hw5_jh4054"
 author: "Joy Hsu"
 date: "11/5/2018"
-output: html_document
+output: github_document
 ---
 
 This R Markdown for HW5 reinforces skills from the Iteration Module
