@@ -5,11 +5,12 @@ date: "11/5/2018"
 output: html_document
 ---
 
+This R Markdown for HW5 reinforces skills from the Iteration Module
+
 ### 0. Setup
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
 
 library(tidyverse)
 library(rvest)
@@ -28,12 +29,14 @@ theme_set(theme_bw() + theme(legend.position = "bottom"))
 ```
 
 ### Problem 1
+
+The first dataset consists of observations for 20 participants in a longitudinal study, 10 in the control arm and 10 in the experimental arm. 
 ```{r}
-#tidy dataset
+#read in csv files. Tidy week and observations as single variables. 
 patient_df = 
   tibble(
     id = c(str_c("con_0", 01:9), "con_10", str_c("exp_0", 01:9), "exp_10"),
-    csv = list.files("./data", full.names = TRUE),
+    csv = list.files("./data/patient", full.names = TRUE),
     data = map(csv, read_csv)) %>% 
   unnest() %>% 
   janitor::clean_names() %>% 
@@ -46,19 +49,36 @@ patient_df =
   select(arm, id, week, observation) %>%
   arrange(arm, id, week)
 
-#spaghetti plot
+#Create spaghetti plot of participant observations week 1-8, in both arms
 patient_plot = patient_df %>% 
+  mutate(
+    arm = str_replace(arm, "exp", "Experimental"),
+    arm = str_replace(arm, "con", "Control")) %>% 
   group_by(id) %>% 
   ggplot(aes(x = week, y = observation, color = id)) +
   geom_line() +
+  geom_point() +
   facet_grid(~arm) +
-  viridis::scale_color_viridis(discrete = TRUE)
+  labs(
+    title = "Subject Observations in Longitudinal Study, Week 1-8",
+    x = "Week",
+    y = "Observation") + 
+  viridis::scale_color_viridis(
+    name = "Subject ID", 
+    discrete = TRUE) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
 patient_plot
 
 #linear model
-lm_exp = lm(week ~ observation, data = filter(patient_df, arm == "exp")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
-lm_con = lm(week ~ observation, data = filter(patient_df, arm == "con")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
+lm_exp = lm(observation ~ week, data = filter(patient_df, arm == "exp")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
+lm_con = lm(observation ~ week, data = filter(patient_df, arm == "con")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
 ```
+
+In the experimental group, subject observation values trend upwards from weeks 1-8. A simple linear model fit for observation by week gives an estimated beta1 of 0.53, p.value < 0.05. 
+
+In the control group, no significant trend is observed for subject observation values from weeks 1-8. There does not appear to be a significant correlation between weeks and change in observation. 
 
 ```{r}
 #Method 2: provide a character vector of the names of files in named directory data
@@ -83,7 +103,7 @@ patient_df2 = patient_id %>%
 
 ### Problem 2
 
-Load and clean dataset
+The homicide dataset
 ```{r}
 #load and tidy dataset
 homicide_data = read_csv("./data/homicide-data.csv") %>% 
