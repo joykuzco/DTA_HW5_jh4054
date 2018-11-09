@@ -13,10 +13,7 @@ This R Markdown for HW5 reinforces skills from the Iteration Module
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
-library(rvest)
 library(knitr)
-
-set.seed(1)
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -48,9 +45,19 @@ patient_df =
          id = as.factor(id)) %>% 
   select(arm, id, week, observation) %>%
   arrange(arm, id, week)
+```
 
+```{r}
+#linear model for experimental group
+lm(observation ~ week, data = filter(patient_df, arm == "exp")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
+
+#linear model for control group
+lm(observation ~ week, data = filter(patient_df, arm == "con")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
+```
+
+```{r}
 #Create spaghetti plot of participant observations week 1-8, in both arms
-patient_plot = patient_df %>% 
+patient_df %>% 
   mutate(
     arm = str_replace(arm, "exp", "Experimental"),
     arm = str_replace(arm, "con", "Control")) %>% 
@@ -68,12 +75,6 @@ patient_plot = patient_df %>%
     discrete = TRUE) +
   theme_bw() +
   theme(legend.position = "bottom")
-
-patient_plot
-
-#linear model
-lm_exp = lm(observation ~ week, data = filter(patient_df, arm == "exp")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
-lm_con = lm(observation ~ week, data = filter(patient_df, arm == "con")) %>% broom::tidy() %>% mutate(sig = p.value < 0.05)
 ```
 
 In the experimental group, subject observation values trend upwards from weeks 1-8. A simple linear model fit for observation by week gives an estimated beta1 of 0.53, p.value < 0.05. 
@@ -159,6 +160,6 @@ prop_test_all %>%
     name = "City", 
     discrete = TRUE) +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 80, hjust = 1), 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), 
         legend.position = "bottom")
 ```
