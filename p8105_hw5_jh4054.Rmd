@@ -80,27 +80,6 @@ In the experimental group, subject observation values trend upwards from weeks 1
 
 In the control group, no significant trend is observed for subject observation values from weeks 1-8. There does not appear to be a significant correlation between weeks and change in observation. 
 
-```{r}
-#Method 2: provide a character vector of the names of files in named directory data
-patient_id2 = 
-  tibble(
-    id = c(str_c("con_0", 01:9), "con_10", str_c("exp_0", 01:9), "exp_10")) %>%
-  mutate(csv = str_c("./data/", id, ".csv")) 
-  
-patient_df2 = patient_id %>% 
-  mutate(observation = map(patient_id$csv, read_csv)) %>% 
-  unnest() %>% 
-  janitor::clean_names() %>% 
-  gather(key = week, value = observation, week_1:week_8) %>% 
-  mutate(week = str_replace(week, "week_", ""),
-         arm = str_replace(id, "_..", ""),
-         id = str_replace(id, "..._", ""),
-         week = as.integer(as.factor(week)),
-         id = as.factor(id)) %>% 
-  select(arm, id, week, observation) %>%
-  arrange(arm, id, week)
-```
-
 ### Problem 2
 
 The homicide dataset was collated by Washington Post on 52179 homicide cases in 50 major US cities, from 2007 to 2015. Altogether, 28 states are represented. The raw dimensions are 52179 rows by 12 columns variables. Each case is reported as a distinct row, with demographic information on the victim's name, age, sex, and race. Attributes regarding the homicide incident include geospatial coordinates, reported date, city, and disposition of the police case. 
