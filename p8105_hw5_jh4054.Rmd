@@ -83,12 +83,13 @@ patient_df2 = patient_id %>%
 ### Problem 2
 
 ```{r}
+#load and tidy dataset
 homicide_data = read_csv("./data/homicide-data.csv") %>% 
   janitor::clean_names() %>% 
   mutate(
     city_state = str_c(city, ", ", state),
     city_state = str_replace(city_state, "Tulsa, AL", "Tulsa, OK"),
-    hom_unsolved = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", TRUE, FALSE))
+    hom_unsolved = ifelse(disposition != "Closed by arrest", 1, 0))
 
 #total homicides
 homicide_total = homicide_data %>% 
@@ -97,23 +98,34 @@ homicide_total = homicide_data %>%
 
 #total unsolved homicides
 homicide_unsolve = homicide_data %>% 
-  filter(hom_unsolved == TRUE) %>% 
   group_by(city_state) %>% 
-  summarise(hom_unsolved = n())
+  summarise(hom_unsolved = sum(hom_unsolved))
 
 #total number of homicides and unsolved homicides
-homicide_data = left_join(homicide_total, homicide_unsolve)
+homicide_tidy = left_join(homicide_total, homicide_unsolve)
 
-prop_test = homicide_data %>% 
+prop_test_balt = homicide_tidy %>% 
   filter(city_state == "Baltimore, MD") %>% 
   mutate(prop = map2(.x = hom_total, .y = hom_unsolved, ~prop.test(n = .x, x = .y))) %>% 
   broom::tidy() %>% 
   unnest()
 
-pull(prop_test)
+pull(prop_test_balt)
 
-prop_test_baltimore = homicide_data %>% 
+p1 = homicide_tidy %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  mutate(prop = map2(hom_total, hom_unsolved, ~prop.test)) %>% unnest()
+  broom::tidy() %>% 
+  unnest()
+
+prop.test(n = homicide_tidy$hom_total, x = homicide_tidy$hom_unsolved)
+
+prop_test_baltimore = homicide_tidy %>% 
   filter(city_state == "Baltimore, MD") %>% 
   with(., prop.test(n = hom_total, x = hom_unsolved)) %>% broom::tidy()
+```
+
+```{r}
+#proportion test in R
 ```
 
